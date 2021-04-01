@@ -178,7 +178,6 @@ group by department_id
 order by department_id asc;
 
 
-
 select
     department_id "부서번호",
     first_name
@@ -190,3 +189,53 @@ group by department_id; -- 에러발생
     from절에서 사용할 수 있다. 그룹화된 상태에서 특정 레코드
     하나만 선택하는것이 애매하므로 에러가 발생한다.
 */
+
+
+
+/*
+부서별 급여의 합계는 distinct를 사용해서 SQL문을 작성할 수 없다.
+*/
+select distinct department_id, sum(salary) from employees; --에러발생
+
+
+/*
+시나리오] 부서아이디가 50인 사원들의 직원총합, 평균급여, 급여총합이
+얼마인지 표현하는 쿼리문을 작성하시오.
+*/
+select
+    count(*) "직원총합",
+    trim(to_char(avg(salary), '999,000.00')) "평균급여",
+    trim(to_char(sum(salary), '999,000')) "급여총합"
+from employees
+where department_id=50
+group by department_id;
+
+
+/*
+having절 : 물리적으로 존재하는 컬럼이 아닌 그룹함수를 통해 논리적으로
+    생성된 컬럼의 조건을 추가할때 사용한다.
+    해당 조건을 where절에 추가하면 에러가 발생한다.
+*/
+/*
+시나리오] 사원테이블에서 각 부서별로 근무하고 있는 직원의 담당업무별 사원수와
+    평균급여가 얼마인지를 출력하는 쿼리문을 작성하시오.
+    단, 사원의 총합이 10명을 초과하는 레코드만 추출하시오.
+*/
+select
+    department_id "부서번호", job_id "담당업무ID", 
+    count(*) "사원수", to_char(avg(salary), '999,000.00') "평균급여"
+from employees
+group by department_id, job_id
+having count(*)>10
+order by department_id asc;
+
+/*
+count(*)와 같이 그룹과 관련된 조건은 where절에 사용할 수 없다.
+*/
+select
+    department_id "부서번호", job_id "담당업무ID", 
+    count(*) "사원수", to_char(avg(salary), '999,000.00') "평균급여"
+from employees
+where count(*)>10
+group by department_id, job_id
+order by department_id asc;
