@@ -14,7 +14,6 @@ join하는 경우가 대부분이다.
 - 두개의 테이블에 동일한 이름의 컬럼이 존재하면 "테이블명,컬럼명"
 형태로 기술해야 한다.
 - 테이블의 별칭을 사용한다면 "별칭명.컬럼명" 형태로 쓸수도 있다.
-
 형식1] (ANSI 표준방식)
     select
         컬럼1, 컬럼2,...
@@ -38,7 +37,7 @@ from employees inner join departments
         있으므로 "column ambiguously defined" 에러가 발생한다.
         이때는 어떤 테이블에서 가져올지 명시해야 한다.
     */
-    
+
 -- as(별칭) 없이 작성하여 쿼리문이 길어짐 
 select
     employee_id, first_name, last_name, email, 
@@ -52,11 +51,10 @@ select
     emp.department_id, department_name
 from employees emp inner join departments dep
     on emp.department_id=dep.department_id;
-    
-    
+
+
 /*
 3개 이상의 테이블 조인
-
 시나리오] seattle(시애틀)에 위치한 부서에서 근무하는 직원의 정보를 출력하는
 쿼리문을 작성하시오. 단 표준방식으로 작성하시오.
     출력결과] 사원이름, 이메일, 부서아이디, 부서명, 
@@ -109,14 +107,13 @@ where
     and D.department_id=E.department_id
     and E.job_id=J.job_id
     and city='Seattle';
-    
-    
--------------------------------------------------------
+
+
+---------------------------------------------------
 
 
 /*
 2] 외부조인(outer join)
-
 outer join은 inner join과 달리 두 테이블에 조인조건이 정확히 일치하지
 않아도 기준이 되는 테이블에서 결과값을 가져오는 join문이다.
 outer join을 사용할때는 반드시 outer 전에 데이터를 어떤 테이블을 기준으로
@@ -134,10 +131,10 @@ outer join을 사용할때는 반드시 outer 전에 데이터를 어떤 테이블을 기준으로
 시나리오] 전체직원의 사원번호, 이름, 부서아이디, 부서명, 지역을 외부조인(left)을
     통해 출력하시오.
 */
-select 
-    employee_id, first_name, last_name, e.department_id,
-    department_name, D.location_id, city, state_province
-from employees E 
+select
+    employee_id, first_name, last_name, E.department_id, department_name, 
+    city, state_province
+from employees E
     left outer join departments D
         on E.department_id=D.department_id
     left outer join locations L
@@ -145,7 +142,7 @@ from employees E
 
 
 /*
-시나리오] 전체직원의 사원번호, 이름, 부서아이디, 부서명, 지역을 외부조인(left)을
+시나리오] 전체직원의 사원번호, 이름, 부서아이디, 부서명, 지역을 외부조인(right)을
     통해 출력하시오.
 */
 select
@@ -157,7 +154,9 @@ from employees E
     right outer join locations L
         on D.location_id=L.location_id;
 
+
 -- left 혹은 right와 같이 기준이 되는 테이블이 달라지면 인출되는 결과도 달라진다.
+
 
 /*
 형식2(오라클방식)
@@ -177,14 +176,14 @@ from employees E
     통해 출력하시오. 단 오라클방식으로 작성하시오.
 */
 select
-    employee_id, first_name, last_name, Emp.department_id, department_name,
-    Loc.location_id, city, state_province
-from employees Emp, departments Dep, locations Loc
-where
+    employee_id, first_name, last_name, Dep.department_id, department_name,
+    city, state_province
+from employees Emp, departments Dep, Locations Loc
+where 
     Emp.department_id=Dep.department_id(+)
-    and Dep.location_id=Loc.location_id(+);
-    
-    
+    and Dep.department_id=Loc.location_id(+);
+
+
 /*
 3] self join(셀프조인)
     셀프조인은 하나의 테이블에 있는 컬럼끼리 연결해야 하는 경우에 사용한다.
@@ -217,3 +216,186 @@ from
     employees empClerk, employees empManager
 where
     empClerk.manager_id=empManager.employee_id;
+
+
+/*
+시나리오] self join을 사용하여 "Kimberely / Grant" 사원보다 입사일이 
+    늦은 사원의 이름과 입사일을 출력하시오.
+    출력목록 : first_name, last_name, hire_date
+*/
+-- 1. Kimberely의 정보 확인
+select * from employees where first_name='Kimberely' and last_name='Grant';
+-- 2. 07/05/24 이후에 입사한 직원들을 인출
+select * from employees where hire_date>'07/05/24';
+-- 3. self join으로 위 커리문을 합친다.
+select
+    Clerk.first_name, Clerk.last_name, Clerk.hire_date
+from employees Kimberely, employees Clerk
+where
+    Kimberely.hire_date<Clerk.hire_date
+    and Kimberely.first_name='Kimberely' and Kimberely.last_name='Grant' 
+order by hire_date asc;
+
+
+/*
+using : join문에서 주로 사용하는 on절을 대체할 수 있는 문장
+    형식] on 테이블1.컬럼=테이블2.컬럼
+                => using(컬럼)
+*/
+
+/*
+시나리오] seattle(시애틀)에 위치한 부서에서 근무하는 직원의 정보를 출력하는
+쿼리문을 작성하시오. 단 표준방식과 using을 사용해서 작성하시오.
+    출력결과] 사원이름, 이메일, 부서아이디, 부서명, 담당업무아이디, 담당업무명, 근무지역
+*/
+select
+    first_name, last_name, email, department_id, department_name
+    job_id, job_title, city
+from locations
+    inner join departments using(location_id)
+    inner join employees using(department_id)
+    inner join jobs using(job_id)
+where lower(city)='seattle';/*
+        using절에 사용된 식별자 컬럼의 경우 select절에서 테이블의
+        별칭을 붙이면 오류가 발생한다.
+        using절에 사용된 컬럼명은 좌, 우측의 테이블에 동시에 존재하는
+        컬럼이라는것을 전재로 작성되기 때문에 굳이 별칭을 붙여줄 이유가
+        없기 때문이다.
+    */
+    
+
+ /*
+ 퀴즈] 2005년에 입사한 사원들중 California(STATE_PROVINCE) / 
+ South San Francisco(CITY)에서 근무하는 사원들의 정보를 출력하시오.
+ 단, 표준방식과 using을 사용해서 작성하시오.
+ 
+ 출력결과] 사원번호, 이름, 성, 급여, 부서명, 국가코드, 국가명(COUNTRY_NAME)
+        급여는 세자리마다 컴마를 표시한다. 
+ 참고] '국가명'은 countries 테이블에 입력되어있다. 
+ */
+select
+    employee_id, first_name, last_name, 
+    to_char(salary, '999,000'), department_name, country_id, country_name
+from locations
+    inner join departments using(location_id)
+    inner join employees using(department_id)
+    inner join countries using(country_id)
+where 
+    city='South San Francisco'
+    and state_province='California'
+    and hire_date>'04/12/31'
+    and hire_date<'06/01/01';
+    
+---------------------------------------------------------    
+    
+select
+    employee_id, first_name, last_name, 
+    to_char(salary, '999,000'), department_name, country_id, country_name
+from locations
+    inner join departments using(location_id)
+    inner join employees using(department_id)
+    inner join countries using(country_id)
+where
+    (to_char(hire_date, 'yyyy')='2005'
+    or substr(hire_date, 1, 2)='05'
+    or hire_date like '05%')
+    and city='South San Francisco'
+    and state_province='California';
+
+/*
+    - 날짜 형식도 문자와 마찬가지로 자르거나 like를 통해
+    검색이 가능하다.   
+    - 함수는 select절 뿐만 아니라 where절에도 사용할 수 있다.
+*/
+
+
+
+
+
+/************************
+연습문제
+************************/
+
+
+
+/*
+1. inner join 방식중 오라클방식을 사용하여 first_name 이 Janette 인 
+사원의 부서ID와 부서명을 출력하시오.
+출력목록] 부서ID, 부서명
+*/
+select
+    Emp.department_id "부서ID", department_name "부서명"
+from employees Emp, departments Dep
+where Emp.department_id=Dep.department_id
+    and first_name='Janette';
+
+
+/*
+2. inner join 방식중 SQL표준 방식을 사용하여 사원이름과 함께 그 사원이 
+소속된 부서명과 도시명을 출력하시오
+출력목록] 사원이름, 부서명, 도시명
+*/
+select
+    (first_name||' '||last_name) "사원이름", department_name "부서명", city "도시명"
+from departments D
+    inner join employees E on E.department_id=D.department_id
+    inner join locations L on D.location_id=L.location_id ;
+
+
+/*
+3. inner join과 using 연산자를 사용하여 50번 부서(DEPARTMENT_ID)에 
+속하는 모든 담당업무(JOB_ID)의 고유목록(distinct)을 부서의 도시명(CITY)을 포함하여 출력하시오.
+출력목록] 담당업무ID, 부서ID, 부서명, 도시명
+*/
+select
+    distinct job_id, department_id, department_name, city
+from departments
+    inner join employees using(department_id)
+    inner join locations using(location_id)
+where
+    department_id=50;
+
+
+/*
+4. 내부조인을 사용하여 커미션(COMMISSION_PCT)을 받는 모든 
+사원의 이름, 부서명, 도시명을 출력하시오. 
+출력목록] 사원이름, 부서ID, 부서명, 도시명
+*/
+select
+    first_name, last_name, department_name, city
+from employees E, departments D, locations L
+where
+    E.department_id=D.department_id
+    and D.location_id=L.location_id
+    and E.commission_pct is not null ;
+
+
+/*
+5. 사원의 이름(FIRST_NAME)에 'A'가 포함된 모든사원의 이름과 부서명을 출력하시오.
+출력목록] 사원이름, 부서명
+*/
+select
+    first_name, last_name, department_name
+from employees E, departments D
+where
+    E.department_id=D.department_id
+    and first_name like '%A%';
+
+
+/*
+6. “city : Toronto / state_province : Ontario” 에서 근무하는 모든 사원의 이름, 업무명, 부서번호 및 부서명을 출력하시오.
+출력목록] 사원이름, 업무명, 부서ID, 부서명
+*/
+select
+    first_name, last_name, job_title, D.department_id, department_name
+from employees E, departments D, locations L, jobs J
+where 
+    E.department_id=D.department_id
+    and D.location_id=L.location_id
+    and E.job_id=J.job_id
+    and city='Toronto'
+    and state_province='Ontario';
+
+
+
+

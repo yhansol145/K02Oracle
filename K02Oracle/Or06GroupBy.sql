@@ -178,6 +178,7 @@ group by department_id
 order by department_id asc;
 
 
+
 select
     department_id "부서번호",
     first_name
@@ -191,16 +192,14 @@ group by department_id; -- 에러발생
 */
 
 
-
 /*
 부서별 급여의 합계는 distinct를 사용해서 SQL문을 작성할 수 없다.
 */
 select distinct department_id, sum(salary) from employees; --에러발생
 
-
 /*
 시나리오] 부서아이디가 50인 사원들의 직원총합, 평균급여, 급여총합이
-얼마인지 표현하는 쿼리문을 작성하시오.
+    얼마인지 표현하는 쿼리문을 작성하시오.
 */
 select
     count(*) "직원총합",
@@ -216,13 +215,15 @@ having절 : 물리적으로 존재하는 컬럼이 아닌 그룹함수를 통해 논리적으로
     생성된 컬럼의 조건을 추가할때 사용한다.
     해당 조건을 where절에 추가하면 에러가 발생한다.
 */
+
 /*
 시나리오] 사원테이블에서 각 부서별로 근무하고 있는 직원의 담당업무별 사원수와
     평균급여가 얼마인지를 출력하는 쿼리문을 작성하시오.
     단, 사원의 총합이 10명을 초과하는 레코드만 추출하시오.
 */
+
 select
-    department_id "부서번호", job_id "담당업무ID", 
+    department_id "부서번호", job_id "담당업무",
     count(*) "사원수", to_char(avg(salary), '999,000.00') "평균급여"
 from employees
 group by department_id, job_id
@@ -239,3 +240,139 @@ from employees
 where count(*)>10
 group by department_id, job_id
 order by department_id asc;
+
+
+
+
+
+
+/************************
+연습문제
+************************/
+
+
+
+/* 
+1. 전체 사원의 급여최고액, 최저액, 평균급여를 출력하시오. 컬럼의 별칭은 아래와 같이 하고, 평균에 대해서는 정수형태로 반올림 하시오.
+별칭) 급여최고액 -> MaxPay
+급여최저액 -> MinPay
+급여평균 -> AvgPay
+*/
+select 
+    max(salary) "MaxPay", min(salary) "MinPay", round(avg(salary)) "AvgPay"
+from employees;
+
+
+/* 
+2. 각 담당업무 유형별로 급여최고액, 최저액, 총액 및 평균액을 출력하시오. 컬럼의 별칭은 아래와 같이하고 
+모든 숫자는 to_char를 이용하여 세자리마다 컴마를 찍고 정수형태로 출력하시오.
+별칭) 급여최고액 -> MaxPay
+급여최저액 -> MinPay
+급여평균 -> AvgPay
+급여총액 -> SumPay
+참고) employees 테이블의 job_id컬럼을 기준으로 한다.
+*/
+select
+    job_id, trim(to_char(max(salary), '999,000')) "MaxPay", trim(to_char(min(salary), '999,000')) "MinPay", 
+    trim(to_char(sum(salary), '999,000')) "SumPay", trim(to_char(avg(salary), '999,000')) "AvgPay"
+from employees
+group by job_id
+order by job_id;
+
+
+/* 연습문제
+3. count() 함수를 이용하여 담당업무가 동일한 사원수를 출력하시오.
+참고) employees 테이블의 job_id컬럼을 기준으로 한다.
+*/
+select
+    job_id, count(*) "직원합계"
+from employees
+group by job_id
+order by count(*) ; --정렬방법1
+--order by "직원합계" --정렬방법2
+/*
+    물리적으로 존재하지 않는 컬럼의 경우 order by 절에
+    사용할때는 원형을 그대로 쓰거나, 별칭을 사용하면 된다.
+*/
+
+
+/* 
+4. 급여가 10000달러 이상인 직원들의 담당업무별 합계인원수를 출력하시오.
+*/
+select
+    job_id, count(*) "합계인원수"
+from employees
+where salary>=10000
+group by job_id
+order by count(*) desc;
+--급여는 물리적으로 존재하는 컬럼이므로 where절에 조건을 걸어야 한다.
+
+
+/* 
+5. 급여최고액과 최저액의 차액을 출력하시오. 
+*/
+select
+    max(salary) - min(salary)
+from employees;
+
+
+/*
+6. 직급별 사원의 최저급여를 출력하시오. 관리자를 알수없는 사원 및 최저급여가
+3000미만인 그룹은 제외시키고 결과를 급여의 내림차순으로 정렬하여 출력하시오.
+*/
+select
+    job_id, min(salary) "직급별 최저급여"
+from employees
+where manager_id is not null 
+group by job_id
+having min(salary)>=3000
+order by min(salary) desc;
+/*
+    관리자를 알수 없는 => 물리적으로 존재하는 컬럼이므로 where에 기술
+    최저급여가 3000 미만인 => 물리적으로 존재하지 않는 그룹함수에 의해
+                        논리적으로 추가된 컬럼이므로 having절에 기술
+*/
+
+
+/*
+7. 각 부서에 대해 부서번호, 사원수, 부서 내의 모든 사원의 
+평균급여를 출력하시오. 평균급여는 소수점 둘째자리로 반올림하시오.
+*/
+select 
+    department_id, count(*), to_char(round(avg(salary),2), '999,999.00') "평균급여"
+from employees
+group by department_id
+order by department_id asc;
+
+
+/*
+8. 각 부서에 대해 부서번호, 부서이름, 지역명, 사원수, 부서내의 모든 사원의 
+평균급여를 출력하시오. 평균급여는 정수로 반올림하고 세자리마다 컴마를 출력하시오.
+decode함수를 사용하여 각 부서번호에 맞는 부서명이 나오게 하시오.
+*/
+select
+    department_id,
+    decode(department_id, 
+            10, 'Administration',
+            20, 'Marketin',
+            30,	'Purchasing',
+            40,	'Human Resources',
+            50,	'Shipping',
+            60,	'IT' ,
+            70, 'Public Relations',
+            80, 'Sales',
+            90, 'Executive',
+            100,'Finance',
+             '그냥부서') as "부서이름",
+            decode(department_id, 
+            20,	'Toronto',
+            40,	'London',
+            50,	'South San Francisco',
+            60,	'Southlake' ,
+            70, 'Munich',
+            80, 'Oxford',
+            'Seattle') as "지역명",
+            count(*) "사원수", to_char(round(avg(salary)), '999,000') "평균급여"
+from employees
+group by department_id
+order by department_id;
