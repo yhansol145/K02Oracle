@@ -44,13 +44,13 @@ select job, avg(sal) from emp group by job having avg(sal)
 
 --------------------------------------------------------------------------------
 
-/* (~ing)
+/*
 05.각부서의 최소 급여를 받는 사원의 이름, 급여, 부서번호를 표시하시오.
 */
 
 select deptno, min(sal) from emp group by deptno;
 
-select ename, sal, deptno from emp where 
+select ename, sal, deptno from emp where sal in (select min(sal) from emp group by deptno);
 
 --------------------------------------------------------------------------------
 
@@ -120,7 +120,8 @@ select empno, ename from emp where deptno in (select deptno from emp where ename
 12.부서 위치가 DALLAS인 사원의 이름과 부서번호 및 담당 업무를 표시하시오.
 */
 
--- ??
+select ename, deptno, job from emp inner join dept using(deptno)
+where loc='DALLAS';
 
 --------------------------------------------------------------------------------
 
@@ -137,25 +138,32 @@ select ename, sal from emp where mgr=(select empno from emp where ename='KING');
 14.RESEARCH 부서의 사원에 대한 부서번호 사원이름 및 담당 업무를 표시하시오.
 */
 
+select deptno, ename, job from emp inner join dept using(deptno) where dname='RESEARCH';
+
 --------------------------------------------------------------------------------
 
-/* (~ing)
+/* 
 15.평균 급여 보다 많은 급여를 받고 이름에 k가 포함된 사원과 같은 부서에서 
     근무하는 사원의 사원번호, 이름, 급여를 표시하시오.
 */
 
 select avg(sal) from emp;
-select ename from emp where sal>(select avg(sal) from emp);
 
-select ename, deptno from emp where ename like '%K%';
+select deptno from emp where ename like '%K%';
+
+select empno, ename, sal from emp where sal>(select avg(sal) from emp) and deptno in 
+            (select deptno from emp where ename like '%K%');
 
 --------------------------------------------------------------------------------
 
-/* (~ing)
+/* 
 16.평균 급여가 가장 적은 업무를 찾으시오.
 */
 
-select job, avg(sal) from emp group by job;
+select min(avg(sal)) from emp group by job;
+
+select job from emp having avg(sal) = 
+    (select min(avg(sal)) from emp group by job) group by job;
 
 --------------------------------------------------------------------------------
 
