@@ -36,11 +36,27 @@ select ename, job, sal from emp where sal=(select min(sal) from emp);
 04.평균 급여가 가장 적은 직급(job)과 평균 급여를 표시하시오.
 */
 
-select job, avg(sal) from emp group by job;
-select min(avg(sal)) from emp group by job;
+select * from emp group by job; /* 오류발생
+                group by로 그룹화한 데이터에서 그룹함수를
+                통한 결과 이외의 값은 출력이 애매하므로 
+                오류가 발생하게 된다.
+*/
 
-select job, avg(sal) from emp group by job having avg(sal)
-                =(select min(avg(sal)) from emp group by job);
+/*
+ 담당업무로 그룹화 하여 업무별 평균급여를 조회
+*/
+select job, avg(sal) from emp group by job;
+select min(round(avg(sal))) from emp group by job;
+
+/*
+    평균급여는 물리적으로 존재하는 컬럼이 아니므로
+    where절에는 사용할 수 없고 having절에 사용해야 한다.
+    즉, 평균급여가 1017인 직급을 출력하는 방식으로
+    서브쿼리를 작성한다.
+*/
+select job, round(avg(sal)) 
+    from emp group by job 
+    having round(avg(sal)) = (select round(min(avg(sal))) from emp group by job);
 
 --------------------------------------------------------------------------------
 
@@ -110,7 +126,15 @@ order by sal asc;
 11.이름에 K가 포함된 사원과 같은 부서에서 일하는 사원의 사원번호와 이름을 표시하는 질의를 작성하시오
 */
 
-select deptno from emp where ename like '%K%';
+select deptno from emp where ename like '%K%'; -- 부서번호 확인 : 10, 30
+
+select * from emp where deptno=10 or deptno=30; -- Or로 조건걸기
+select * from emp where deptno in (10, 30); -- in으로 조건걸기
+/*
+    or조건을 in으로 변경할 수 있으므로, 서브쿼리에서 복수행
+    연산에 in을 사용한다. 2개이상의 결과를 or로 연결하여
+    출력하는 효과를 가진다.
+*/
 
 select empno, ename from emp where deptno in (select deptno from emp where ename like '%K%');
 
@@ -130,7 +154,7 @@ where loc='DALLAS';
 */
 
 select empno from emp where ename='KING';
-select ename, sal from emp where mgr=(select empno from emp where ename='KING');
+select ename, to_char(sal, '999,000') from emp where mgr=(select empno from emp where ename='KING');
 
 --------------------------------------------------------------------------------
 
@@ -147,12 +171,22 @@ select deptno, ename, job from emp inner join dept using(deptno) where dname='RE
     근무하는 사원의 사원번호, 이름, 급여를 표시하시오.
 */
 
-select avg(sal) from emp;
+select round(avg(sal)) from emp; -- 결과 : 2077
 
-select deptno from emp where ename like '%K%';
+select * from emp where ename like '%K%'; -- 결과 : 10, 30
 
-select empno, ename, sal from emp where sal>(select avg(sal) from emp) and deptno in 
-            (select deptno from emp where ename like '%K%');
+-- 급여는 2077이상이고, 부서번호 10, 30인 사원 출력
+select * from emp 
+    where sal>2077 and deptno in(10, 30);
+    
+-- 서브쿼리로 작성
+select * from emp
+    where sal>(select round(avg(sal)) from emp)
+    and deptno in(select deptno from emp where ename like '%K%');
+
+select empno, ename, sal from emp
+    where sal>(select avg(sal) from emp)
+    and deptno in (select deptno from emp where ename like '%K%');
 
 --------------------------------------------------------------------------------
 
